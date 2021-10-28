@@ -840,6 +840,8 @@ function H.get_surround_info(sur_type, use_cache)
     res = H.special_interactive(sur_type)
   elseif char == 't' then
     res = H.special_tag(sur_type)
+  elseif char == 'l' then
+    res = H.special_latex(sur_type)
   else
     res = H.surroundings[char]
   end
@@ -915,7 +917,24 @@ function H.special_tag(sur_type)
     if tag_name == '' then
       return nil
     end
-    return { left = '<' .. tag_name .. '>', right = '</' .. tag_name .. '>' }
+    return { left = string.format('<%s>', tag_name), right = string.format('</%s>', tag_name) }
+  end
+end
+
+-- Similar to `special_tag` but has `\begin{foo}...\end{foo}` instead of
+-- `<foo>...</foo>`.
+function H.special_latex(sur_type)
+  if sur_type == 'input' then
+    return { find = [[\begin{(%a%w*)} ?.- ?\end{%1}]], extract = [[^(\begin{.-} ?).-( ?\end{.-})$]] }
+  else
+
+    local latex_name = H.user_input('Latex object name')
+
+    -- Don't add anything if user supplied empty string (or hit `<Esc>`)
+    if latex_name == '' then
+      return nil
+    end
+    return { left = string.format([[\begin{%s} ]], latex_name), right = string.format([[ \end{%s}]], latex_name) }
   end
 end
 
